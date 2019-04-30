@@ -26,7 +26,6 @@ def read(*names, **kwargs):
 
 setup(
     name='peptide2genome',
-    version='0.0.0',
     license='BSD 2-Clause License',
     description='Django-backed API for mapping peptides onto genomic coordinates.',
     long_description='%s\n%s' % (
@@ -71,6 +70,8 @@ setup(
     install_requires=[
         # eg: 'aspectlib==1.1.1', 'six>=1.7',
     ],
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True,
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
