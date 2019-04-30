@@ -35,21 +35,29 @@ def fasta_parse(fasta_name=default_db_name, all_records=False):
 
 
 def digest_entry(entry, pattern=trypsin_pattern):
-    candidates = entry.sequence.findall(pattern=pattern)
+    candidates = re.findall(pattern=pattern, string=entry.sequence)
     valid = pd.DataFrame(columns=['id', 'accession', 'sequence', 'start', 'end'])
     position_counter = 1
     hasher = hashlib.sha256()
 
     for c in candidates:
-        if c.length > reasonable_peptide_length:
+        if len(c) > reasonable_peptide_length:
             start = position_counter
-            end = position_counter + c.length - 1
+            end = position_counter + len(c) - 1
             defining_string_bytes = str(entry.accession + c + str(start) + str(end)).encode()
             hasher.update(defining_string_bytes)
             id = hasher.digest().hex()[0:hash_length]
             valid = valid.append({'id': id, 'accession': entry.accession, 'sequence': c, 'start': start, 'end': end},
                                  ignore_index=True)
 
-        position_counter = position_counter + c.length
+        position_counter = position_counter + len(c)
 
     return valid
+
+
+def digest_entries(entries):
+    peptides = pd.DataFrame(columns=['id', 'accession', 'sequence', 'start', 'end'])
+    for index, entry in entries.iterrows():
+        peptides = peptides.append(digest_entry(entry, pattern=trypsin_pattern))
+
+    return peptides
