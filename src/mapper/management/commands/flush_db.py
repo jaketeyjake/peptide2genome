@@ -8,4 +8,4 @@ class Command(BaseCommand):
     help = "Erase the contents of the databases!"
 
     def handle(self, *args, **options):
-        Protein.objects.all().delete()
+        Peptide.objects.all().delete()

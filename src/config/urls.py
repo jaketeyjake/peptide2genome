@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
+from rest_framework.documentation import include_docs_urls
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -16,6 +17,8 @@ urlpatterns = [
     path("users/", include("peptide2genome.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
+    path("peptide2genome", include(("mapper.urls", "mapper"), namespace="mapper")),
+    path("docs/", include_docs_urls(title="Peptide2Genome API")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
