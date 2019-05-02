@@ -4,6 +4,7 @@ from mapper.models import Protein, Peptide, SpanGroup, Region, SpanGroup_Regions
 import re
 import requests
 import hashlib
+import pandas as pd
 
 
 class Command(BaseCommand):
@@ -64,24 +65,27 @@ class Command(BaseCommand):
                     decoded = response.json()
                     print(decoded)
 
-                    # iterate through decoded.mappings
-                    absolute_start = 0
-                    absolute_end = 0
-                    span_group_data_to_hash = ''
-                    for segment in decoded['mappings']:
-                        pass
-                        # gather info: start, end, chromosome, strand
-                        hashable_representation = \
-                            str(
-                                segment['start']) + str(
-                                segment['end']) + str(
-                                segment['seq_region_name']) + str(
-                                segment['strand']
-                            )
+                    response_table = pd.DataFrame(data=decoded['mappings'])
 
-                        hashable_representation = hashable_representation.encode()
-                        self.hasher.update(hashable_representation)
-                        segment_id = self.hasher.digest().hex()[0:self.hash_length]
+                    spangroup_absolute_start = response_table['start'].min()
+                    spangroup_absolute_end = response_table['end'].max()
+                    spangroup_n_segments = response_table.shape[0]
+
+                    hashes = response_table.apply(self._create_hash_from_column_values,
+                                                  args=('start', 'end', 'seq_region_name', 'strand'),
+                                                  axis=1
+                                                  )
+                    response_table['id'] = hashes
+                    response_table = response_table.sort_values(by=['id'])
+                    print(response_table)
+
+                    spangroup_id = self._create_hash_from_list_of_ids(response_table['id'])
+                    print(spangroup_id)
+
+
+
+                    # iterate through decoded.mappings
+
 
                         # hash the data, pile on to data_string_to_hash
 
@@ -102,3 +106,24 @@ class Command(BaseCommand):
 
         else:
             print('That peptide does not exist in the database')
+
+    def _create_hash_from_column_values(self, x, *args):
+        """
+        Create a hash representation of certain fields in a pandas df
+        :param x:
+        :param args:
+        :return:
+        """
+        data_string = ''
+        for colname in args:
+            data_string += str(x[colname])
+        return self._do_hash(data_string)
+
+    def _create_hash_from_list_of_ids(self, idlist):
+        data_string = "".join(idlist)
+        return self._do_hash(data_string)
+
+    def _do_hash(self, data_string):
+        encoded_data_string = data_string.encode()
+        self.hasher.update(encoded_data_string)
+        return self.hasher.digest().hex()[0:self.hash_length]
