@@ -16,6 +16,7 @@ class SpanGroup(models.Model):
     chromosome = models.CharField(max_length=3)
     start = models.IntegerField()
     end = models.IntegerField()
+    members = models.IntegerField()
 
 
 class Region(models.Model):

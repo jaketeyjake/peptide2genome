@@ -5,6 +5,14 @@ import re
 import requests
 import hashlib
 import pandas as pd
+import logging
+
+logger = logging.getLogger('AddPeptide')
+logger.setLevel(logging.DEBUG)
+console_logger = logging.StreamHandler()
+console_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+console_logger.setFormatter(console_format)
+logger.addHandler(console_logger)
 
 
 class Command(BaseCommand):
@@ -16,13 +24,14 @@ class Command(BaseCommand):
     base_url = 'https://rest.ensembl.org/map/translation/'
     url_suffix = '?content-type=application/json'
     hash_length = 10
-    hasher = hashlib.sha256()
+    LIVE = False
 
     def add_arguments(self, parser):
         parser.add_argument('peptide', type=str)
 
     def handle(self, *args, **options):
-        print(options['peptide'])
+        logger.info('Handling add_peptide command for:')
+        logger.info(options['peptide'])
 
         peptide = options['peptide']
         peptide_length = len(peptide)
@@ -32,16 +41,20 @@ class Command(BaseCommand):
         check_for_peptide = Peptide.objects.filter(sequence=peptide)
 
         if check_for_peptide.exists():
-            print(peptide + ' was found.')
+            logger.info(peptide + ' was found.')
             return
         else:
-            print(peptide + ' was not found. Creating!')
+            logger.info(peptide + ' was not found. Creating!')
 
         proteins_with_peptide = Protein.objects.filter(sequence__contains=peptide)
         if len(proteins_with_peptide) > 0:
 
             # create the peptide and set its request to 1
-            # po = Peptide.objects.create(sequence=peptide, requests=1)
+            if self.LIVE:
+                logger.info("Creating Peptide: " + peptide)
+                po = Peptide.objects.create(sequence=peptide, requests=1)
+            else:
+                logger.info("IF LIVE: Would have created Peptide: " + peptide)
 
             # find the peptide in proteins in the database
             for result in proteins_with_peptide:
@@ -49,27 +62,28 @@ class Command(BaseCommand):
                 accession = result.accession
                 accession_parts = accession.split('.')
                 accession_trimmed = accession_parts[0]
-                print('Accession:' + accession_trimmed)
+                logger.info('Accession:' + accession_trimmed)
                 pattern = re.compile(peptide)
 
                 for match in pattern.finditer(result.sequence):
                     match_start.append(match.start())
-                    print('  -match at: ' + str(match.start()))
+                    logger.info('  -match at: ' + str(match.start()))
 
-                print(len(match_start))
+                logger.info(len(match_start))
 
                 for match_pos in match_start:
                     formulated_url = self.base_url + accession_trimmed + "/" + str(match_pos+1) + ".." + str(match_pos+peptide_length) + self.url_suffix
-                    print(formulated_url)
+                    logger.info(formulated_url)
                     response = requests.get(formulated_url)
                     decoded = response.json()
-                    print(decoded)
+                    logger.info(decoded)
 
                     response_table = pd.DataFrame(data=decoded['mappings'])
 
                     spangroup_absolute_start = response_table['start'].min()
                     spangroup_absolute_end = response_table['end'].max()
                     spangroup_n_segments = response_table.shape[0]
+                    spangroup_chromosome = response_table.loc[0]['seq_region_name']
 
                     hashes = response_table.apply(self._create_hash_from_column_values,
                                                   args=('start', 'end', 'seq_region_name', 'strand'),
@@ -77,12 +91,70 @@ class Command(BaseCommand):
                                                   )
                     response_table['id'] = hashes
                     response_table = response_table.sort_values(by=['id'])
-                    print(response_table)
+                    logger.info(response_table)
 
                     spangroup_id = self._create_hash_from_list_of_ids(response_table['id'])
-                    print(spangroup_id)
+                    logger.info(spangroup_id)
 
+                    # check if spangroup exists, if so, do nothing, else procede to checking regions
 
+                    sg_query = SpanGroup.objects.filter(id=spangroup_id)
+
+                    if sg_query.exists():
+                        logger.info('This spangroup " + spangroup_id + " exists - do nothing')
+                        continue
+
+                    # Spangroup does not exist, continue
+
+                    if self.LIVE:
+                        sg_object = SpanGroup.objects.create(
+                            id=spangroup_id,
+                            chromosome=spangroup_chromosome,
+                            start=spangroup_absolute_start,
+                            end=spangroup_absolute_end,
+                            members=spangroup_n_segments
+                        )
+                    else:
+                        logger.info("IF LIVE: Would have created SpanGroup: " + spangroup_id)
+
+                    region_list = []
+
+                    region_list.append(response_table.apply(self._get_id_or_create_region, axis=1))
+
+                    region_list = region_list.sort()
+
+                    # at this point the span group is created and all its regions are created/exist
+                    # time to associate regions with the span group
+                    if self.LIVE:
+                        logger.info("Associating Regions to SpanGroup: " + spangroup_id)
+                        for region_id in region_list:
+                            catenated_ids = spangroup_id + region_id
+                            spangroup_to_region_id = self._do_hash(catenated_ids)
+                            SpanGroup_Regions.objects.create(
+                                id=spangroup_to_region_id,
+                                span_group=SpanGroup.objects.get(id=spangroup_id),
+                                region=Region.objects.get(id=region_id)
+                            )
+                    else:
+                        logger.info("IF LIVE: Would have associated Regions to SpanGroup: " + spangroup_id)
+
+                    # now also associate peptide with spangroup
+                    peptide_spangroup_catenated_ids = peptide + spangroup_id
+                    peptide_spangroup_id = self._do_hash(peptide_spangroup_catenated_ids)
+
+                    if self.LIVE:
+                        logger.info(
+                            "Associating SpanGroup: " + spangroup_id + " to Peptide: " + peptide
+                        )
+                        Peptide_SpanGroups.objects.create(
+                            id=peptide_spangroup_catenated_ids,
+                            peptide=Peptide.objects.get(sequence=peptide),
+                            span_group=SpanGroup.objects.get(id=spangroup_id)
+                        )
+                    else:
+                        logger.info(
+                            "IF LIVE: Would have associated SpanGroup: " + spangroup_id + " to Peptide: " + peptide
+                        )
 
                     # iterate through decoded.mappings
 
@@ -105,7 +177,7 @@ class Command(BaseCommand):
             # create a new Peptide-SpanGroup ID based on a hash of the combined ids of every Peptide and SpanGroup
 
         else:
-            print('That peptide does not exist in the database')
+            logger.info('That peptide does not exist in the master database...doing nothing')
 
     def _create_hash_from_column_values(self, x, *args):
         """
@@ -117,13 +189,34 @@ class Command(BaseCommand):
         data_string = ''
         for colname in args:
             data_string += str(x[colname])
+        print(data_string)
         return self._do_hash(data_string)
+
+    def _get_id_or_create_region(self, x):
+        region_id_query = Region.objects.filter(id=x['id'])
+        if region_id_query.exists():
+            pass
+        else:
+            if self.LIVE:
+                logger.info("Creating Region: " + x['id'])
+                Region.objects.create(
+                    id=x['id'],
+                    start=x['start'],
+                    end=x['end'],
+                    chromosome=x['seq_region_id'],
+                    strand=x['strand']
+                )
+            else:
+                logger.info("IF LIVE: Would have created Region: " + x['id'])
+
+        return x['id']
 
     def _create_hash_from_list_of_ids(self, idlist):
         data_string = "".join(idlist)
         return self._do_hash(data_string)
 
     def _do_hash(self, data_string):
+        hasher = hashlib.sha256()
         encoded_data_string = data_string.encode()
-        self.hasher.update(encoded_data_string)
-        return self.hasher.digest().hex()[0:self.hash_length]
+        hasher.update(encoded_data_string)
+        return hasher.digest().hex()[0:self.hash_length]
