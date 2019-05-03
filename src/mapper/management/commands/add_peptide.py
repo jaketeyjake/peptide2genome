@@ -24,7 +24,7 @@ class Command(BaseCommand):
     base_url = 'https://rest.ensembl.org/map/translation/'
     url_suffix = '?content-type=application/json'
     hash_length = 10
-    LIVE = False
+    LIVE = True
 
     def add_arguments(self, parser):
         parser.add_argument('peptide', type=str)
@@ -47,6 +47,9 @@ class Command(BaseCommand):
             logger.info(peptide + ' was not found. Creating!')
 
         proteins_with_peptide = Protein.objects.filter(sequence__contains=peptide)
+
+        logger.info('Entries containing the peptide: ' + str(len(proteins_with_peptide)))
+
         if len(proteins_with_peptide) > 0:
 
             # create the peptide and set its request to 1
@@ -117,17 +120,15 @@ class Command(BaseCommand):
                     else:
                         logger.info("IF LIVE: Would have created SpanGroup: " + spangroup_id)
 
-                    region_list = []
-
-                    region_list.append(response_table.apply(self._get_id_or_create_region, axis=1))
-
-                    region_list = region_list.sort()
+                    regions = response_table.apply(self._get_id_or_create_region, axis=1)
+                    print(regions)
 
                     # at this point the span group is created and all its regions are created/exist
                     # time to associate regions with the span group
                     if self.LIVE:
                         logger.info("Associating Regions to SpanGroup: " + spangroup_id)
-                        for region_id in region_list:
+                        for region_id in regions:
+                            logger.info(region_id)
                             catenated_ids = spangroup_id + region_id
                             spangroup_to_region_id = self._do_hash(catenated_ids)
                             SpanGroup_Regions.objects.create(
@@ -147,7 +148,7 @@ class Command(BaseCommand):
                             "Associating SpanGroup: " + spangroup_id + " to Peptide: " + peptide
                         )
                         Peptide_SpanGroups.objects.create(
-                            id=peptide_spangroup_catenated_ids,
+                            id=self._do_hash(peptide_spangroup_catenated_ids),
                             peptide=Peptide.objects.get(sequence=peptide),
                             span_group=SpanGroup.objects.get(id=spangroup_id)
                         )
@@ -203,7 +204,7 @@ class Command(BaseCommand):
                     id=x['id'],
                     start=x['start'],
                     end=x['end'],
-                    chromosome=x['seq_region_id'],
+                    chromosome=x['seq_region_name'],
                     strand=x['strand']
                 )
             else:
