@@ -17,7 +17,7 @@ urlpatterns = [
     path("users/", include("peptide2genome.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    path("peptide2genome", include(("mapper.urls", "mapper"), namespace="mapper")),
+    path("peptide2genome/", include(("mapper.urls", "mapper"), namespace="mapper")),
     path("docs/", include_docs_urls(title="Peptide2Genome API")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

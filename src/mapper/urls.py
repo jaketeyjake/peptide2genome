@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.schemas import get_schema_view
 
 from .views import ProteinViewSet, PeptideViewSet, SpanGroupViewSet, RegionViewSet
-from .views import SpanGroup_RegionsViewSet, Peptide_SpanGroupsViewSet
+from .views import SpanGroup_RegionsViewSet, Peptide_SpanGroupsViewSet, peptide_list, peptide_search
 
 router = DefaultRouter()
 
@@ -20,6 +20,8 @@ router.register("peptide_spangroups", Peptide_SpanGroupsViewSet, basename="pepti
 schema_view = get_schema_view(title="Peptide2Genome API")
 
 urlpatterns = [
-    path("/api/", include(router.urls)),
+    path("api/", include(router.urls)),
     # path("", render_aggregation, name="aggregation"),
+    path('peptide_list/', peptide_list, name='peptide_list'),
+    path('peptide_search/', peptide_search, name='peptide_search'),
 ]

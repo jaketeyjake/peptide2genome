@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>peptide2genome Peptide List</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+</head>
+<body>
+    <a href="../peptide_search">Search for a peptide</a>
+    <h2>Display of peptide and requests</h2>
+    <!-- model reference: {{ peptides }} -->
+    <ul>
+        {% for pep in peptides %}
+            <li>{{pep.sequence}} {{pep.requests}}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
