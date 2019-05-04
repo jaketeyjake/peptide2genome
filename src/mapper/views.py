@@ -5,6 +5,7 @@ from .serializers import Peptide_SpanGroupsSerializer, SpanGroup_RegionsSerializ
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from .forms import PeptideReqsForm, PeptideForm
+from django.db.models import F
 import logging
 
 logger = logging.getLogger('VIEWS')
@@ -57,10 +58,26 @@ def peptide_list(request):
         search_token = request.POST['sequence']
         logger.info('Search token is:' + search_token)
         peptides = Peptide.objects.filter(sequence=search_token)
+        if not peptides.exists():
+            # TODO: peptide registration function
+            # peptides =
+            pass
+        else:
+            # increment the counter
+            peptides.update(requests=F('requests') + 1)
     else:
-        peptides = Peptide.objects.all()
+        # Just return the and example peptide if nothing is posted
+        example_peptide = 'ARTKQTARKS'
+        peptides = Peptide.objects.filter(sequence=example_peptide)
 
-    return render(request, 'peptide_list/index.html', {'peptides': peptides})
+    span_group_ids_for_peptide = Peptide_SpanGroups.objects.filter(peptide=peptides.get())
+    span_group_data = SpanGroup.objects.filter(id__in=span_group_ids_for_peptide.values('span_group')).order_by(
+        'chromosome', 'start'
+    )
+    # logger.info(span_group_data)
+
+    return render(request, 'peptide_list/index.html', {'peptides': peptides, 'spangroups': span_group_data})
+    # return render(request, 'peptide_list/index.html', {'peptides': peptides})
 
 
 def peptide_search(request):

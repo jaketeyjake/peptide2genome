@@ -15,5 +15,18 @@
             <li>{{pep.sequence}} {{pep.requests}}</li>
         {% endfor %}
     </ul>
+    <table>
+        {{peptides.as_table}}
+    </table>
+
+    <h3>Display of span_group locations</h3>
+    <!-- model reference: {{ spangroups }} -->
+    <ul>
+        {% for sg in spangroups %}
+            <li>{{sg.chromosome}} {{sg.start}} {{sg.end}}</li>
+        {% endfor %}
+    </ul>
+
+
 </body>
 </html>
