@@ -2,10 +2,11 @@ from rest_framework.viewsets import ModelViewSet, ViewSet, ReadOnlyModelViewSet
 from .models import Protein, Peptide, SpanGroup, Region, Peptide_SpanGroups, SpanGroup_Regions
 from .serializers import ProteinSerializer, PeptideSerializer, SpanGroupSerializer, RegionSerializer
 from .serializers import Peptide_SpanGroupsSerializer, SpanGroup_RegionsSerializer
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import render
 from .forms import PeptideReqsForm, PeptideForm
 from django.db.models import F
+from .importhelper.utils import PeptideRegistrar
 import logging
 
 logger = logging.getLogger('VIEWS')
@@ -60,8 +61,14 @@ def peptide_list(request):
         peptides = Peptide.objects.filter(sequence=search_token)
         if not peptides.exists():
             # TODO: peptide registration function
-            # peptides =
-            pass
+            peptide_registrar = PeptideRegistrar(search_token)
+            peptide_registrar.register()
+            logger.info('Success of creation? ' + str(peptide_registrar.success))
+            if peptide_registrar.success:
+                peptides = Peptide.objects.filter(sequence=search_token)
+            else:
+                logger.info('Aborting because ' + peptide_registrar.message)
+                return(HttpResponse('Could not create that peptide because ' + peptide_registrar.message))
         else:
             # increment the counter
             peptides.update(requests=F('requests') + 1)

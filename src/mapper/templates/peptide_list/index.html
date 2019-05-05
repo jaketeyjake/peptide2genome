@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,27 +6,87 @@
     <title>peptide2genome Peptide List</title>
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/util.css' %}">
 </head>
 <body>
-    <a href="../peptide_search">Search for a peptide</a>
-    <h2>Display of peptide and requests</h2>
+    <div class="header_region">
+        <h1>peptide2genome Results</h1>
+    </div>
+    <p> </p>
+    <h2>Requests for this sequence</h2>
     <!-- model reference: {{ peptides }} -->
-    <ul>
-        {% for pep in peptides %}
-            <li>{{pep.sequence}} {{pep.requests}}</li>
-        {% endfor %}
-    </ul>
-    <table>
-        {{peptides.as_table}}
-    </table>
-
-    <h3>Display of span_group locations</h3>
+    <div class="limiter">
+        <div class="table100 ver2 m-b-110">
+            <table data-vertable="ver2">
+                <thead>
+                    <tr class="row100 head">
+                        <th class="column100 column1" data-column="column1">
+                            Sequence
+                        </th>
+                        <th class="column100 column2" data-column="column2">
+                            Requests
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pep in peptides %}
+                        <tr class="row100">
+                            <td class="column100 column1" data-column="column1">
+                                {{pep.sequence}}
+                            </td>
+                            <td class="column100 column2" data-column="column2">
+                                {{pep.requests}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h2>Genomic locations</h2>
     <!-- model reference: {{ spangroups }} -->
-    <ul>
-        {% for sg in spangroups %}
-            <li>{{sg.chromosome}} {{sg.start}} {{sg.end}}</li>
-        {% endfor %}
-    </ul>
+    <div class="limiter">
+        <div class="table100 ver2 m-b-110">
+            <table data-vertable="ver2">
+                <thead>
+                    <tr class="row100 head">
+                        <th class="column100 column1" data-column="column1">
+                            Chromosome
+                        </th>
+                        <th class="column100 column2" data-column="column2">
+                            Start
+                        </th>
+                        <th class="column100 column3" data-column="column3">
+                            End
+                        </th>
+                        <th class="column100 column4" data-column="column4">
+                            Segments
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sg in spangroups %}
+                        <tr class="row100">
+                            <td class="column100 column1" data-column="column1">
+                                {{sg.chromosome}}
+                            </td>
+                            <td class="column100 column2" data-column="column2">
+                                {{sg.start}}
+                            </td>
+                            <td class="column100 column3" data-column="column3">
+                                {{sg.end}}
+                            </td>
+                            <td class="column100 column4" data-column="column4">
+                                {{sg.members}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <a href="../peptide_search">Search again for another peptide</a>
 
 
 </body>

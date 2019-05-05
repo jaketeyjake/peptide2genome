@@ -1,16 +1,25 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Peptide Genomic Position Search</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/util.css' %}">
 </head>
 <body>
-
-    <form action="/peptide2genome/peptide_list/" method="post">
-        {% csrf_token %}
-        {{ form }}
-        <input type="submit" value="Submit">
-    </form>
+    <div class="header_region">
+        <h1>peptide2genome: Proteogenomic Mapper</h1>
+    </div>
+    <div id="central_omnibox" class="central_omnibox" align="center">
+        <form action="/peptide2genome/peptide_list/" method="post">
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit" value="Find it!">
+        </form>
+    </div>
 
 </body>
 </html>
