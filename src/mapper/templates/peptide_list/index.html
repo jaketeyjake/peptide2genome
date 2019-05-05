@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>peptide2genome Peptide List</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/util.css' %}">
+</head>
+<body>
+    <div class="header_region">
+        <h1>peptide2genome Results</h1>
+    </div>
+    <p> </p>
+    <h2>Requests for this sequence</h2>
+    <!-- model reference: {{ peptides }} -->
+    <div class="limiter">
+        <div class="table100 ver2 m-b-110">
+            <table data-vertable="ver2">
+                <thead>
+                    <tr class="row100 head">
+                        <th class="column100 column1" data-column="column1">
+                            Sequence
+                        </th>
+                        <th class="column100 column2" data-column="column2">
+                            Requests
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pep in peptides %}
+                        <tr class="row100">
+                            <td class="column100 column1" data-column="column1">
+                                {{pep.sequence}}
+                            </td>
+                            <td class="column100 column2" data-column="column2">
+                                {{pep.requests}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h2>Genomic locations</h2>
+    <!-- model reference: {{ spangroups }} -->
+    <div class="limiter">
+        <div class="table100 ver2 m-b-110">
+            <table data-vertable="ver2">
+                <thead>
+                    <tr class="row100 head">
+                        <th class="column100 column1" data-column="column1">
+                            Chromosome
+                        </th>
+                        <th class="column100 column2" data-column="column2">
+                            Start
+                        </th>
+                        <th class="column100 column3" data-column="column3">
+                            End
+                        </th>
+                        <th class="column100 column4" data-column="column4">
+                            Segments
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sg in spangroups %}
+                        <tr class="row100">
+                            <td class="column100 column1" data-column="column1">
+                                {{sg.chromosome}}
+                            </td>
+                            <td class="column100 column2" data-column="column2">
+                                {{sg.start}}
+                            </td>
+                            <td class="column100 column3" data-column="column3">
+                                {{sg.end}}
+                            </td>
+                            <td class="column100 column4" data-column="column4">
+                                {{sg.members}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <a href="../peptide_search">Search again for another peptide</a>
+
+
+</body>
+</html>
