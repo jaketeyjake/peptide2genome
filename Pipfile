@@ -11,8 +11,6 @@ factory-boy = "*"
 
 [packages]
 peptide2genome = {editable = true,path = "."}
-# pset-utils = {editable = true,git = "https://github.com/csci-e-29/2019sp-pset-utils-jaketeyjake"}
-pset-utils = {editable = true,path = "../2019sp-pset-utils-jaketeyjake"}
 django = "*"
 django-environ = "*"
 djangorestframework = "*"
@@ -24,10 +22,6 @@ django-extensions = "*"
 coreapi = "*"
 pandas = "*"
 numpy = "*"
-dask = {extras = ["dataframe"],version = "*"}
-fastparquet = "*"
-s3fs = "*"
-awscli = "*"
 django-debug-toolbar = "*"
 biopython = "*"
 setuptools-scm = "*"
